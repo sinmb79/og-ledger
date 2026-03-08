@@ -134,18 +134,16 @@ export GROUP_ID="@OGLedgerChat"               # 또는 -100xxxxx
 export BAGS_WALLET="3nCpr7qw5mGVXofKS75PLNvv5xfJE3wY9c5JKDGPeAd2"
 export SOLANA_RPC="https://api.mainnet-beta.solana.com"
 export ADMIN_TG_ID="YOUR_TELEGRAM_USER_ID"    # /announce 권한
-export TWITTER_BEARER="..."                    # 선택: 트위터 모니터링
+export BACKEND_URL="http://localhost:3001"     # 백엔드 주소
+export X_SOURCE="auto"                         # auto | api | rss | disabled
+export TWITTER_BEARER=""                       # X API 사용 시에만
+export RSS_FEEDS=""                            # RSS 사용 시 쉼표로 여러 개 입력
 ```
 
 ### 의존성 설치
 
 ```bash
 pip install python-telegram-bot aiohttp apscheduler
-```
-
-Twitter 모니터링 사용 시:
-```bash
-pip install tweepy
 ```
 
 ### 실행
@@ -168,12 +166,40 @@ python telegram_bot_v2.py
 
 ---
 
-## STEP 7 — 트위터 모니터링 설정 (선택)
+## STEP 7 — 공지 모니터링 설정 (무료 우선)
 
-1. [developer.twitter.com](https://developer.twitter.com) 에서 앱 생성
-2. **Free tier** 로도 읽기 전용 API 사용 가능
-3. Bearer Token 발급 → `TWITTER_BEARER` 환경변수 설정
-4. bags.fm 공식 트위터 새 트윗 → 30분마다 자동 체크 → 채널 알림
+### 옵션 A (권장, 무료): RSS 피드 사용
+
+1. `X_SOURCE="rss"` 설정
+2. `RSS_FEEDS`에 RSS/Atom URL 입력 (쉼표로 여러 개 가능)
+3. `TWITTER_BEARER`는 비워둠
+
+예시:
+
+```bash
+export X_SOURCE="rss"
+export RSS_FEEDS="https://example.com/feed.xml,https://another.example/rss"
+export TWITTER_BEARER=""
+```
+
+### 옵션 B (유료 가능): X 공식 API 사용
+
+1. `X_SOURCE="api"` 또는 `auto`
+2. X API 크레딧/요금제 준비
+3. `TWITTER_BEARER` 설정
+
+예시:
+
+```bash
+export X_SOURCE="api"
+export TWITTER_BEARER="YOUR_X_BEARER_TOKEN"
+```
+
+### 참고
+
+- `auto`는 `TWITTER_BEARER`가 있으면 API, 없으면 RSS를 사용합니다.
+- `disabled`는 공지 모니터링을 완전히 끕니다.
+- 비공식 X 미러/Nitter 기반 피드는 안정성이 낮고 정책 이슈가 있을 수 있으니, 운영에서는 "best-effort"로만 사용하세요.
 
 ---
 

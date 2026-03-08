@@ -99,6 +99,12 @@ pip install python-telegram-bot aiohttp apscheduler
 python telegram_bot_v2.py
 ```
 
+### Free-First Setup (Korean)
+
+비개발자용 무료 운영 가이드는 아래 문서를 참고하세요.
+
+- `FREE_SETUP_KO.md`
+
 ---
 
 ## On-chain Data

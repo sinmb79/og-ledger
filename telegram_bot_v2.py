@@ -14,7 +14,7 @@ OG LEDGER — Community Rewards Infrastructure Bot v2
   - bags.fm 트위터 모니터링 알림
 
 설치:
-  pip install python-telegram-bot aiohttp apscheduler tweepy
+  pip install python-telegram-bot aiohttp apscheduler
 
 환경변수 (.env 파일 참고):
   BOT_TOKEN          : Telegram Bot Token
@@ -27,7 +27,8 @@ OG LEDGER — Community Rewards Infrastructure Bot v2
 
 # pyright: reportGeneralTypeIssues=false, reportOptionalMemberAccess=false, reportMissingTypeArgument=false, reportArgumentType=false, reportAttributeAccessIssue=false, reportOperatorIssue=false, reportOptionalSubscript=false, reportIndexIssue=false
 
-import os, json, asyncio, aiohttp, logging
+import os, json, asyncio, aiohttp, logging, hashlib
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from typing import Optional
 from telegram import (
@@ -55,6 +56,8 @@ BAGS_WALLET    = os.getenv("BAGS_WALLET",    "3nCpr7qw5mGVXofKS75PLNvv5xfJE3wY9c
 SOLANA_RPC     = os.getenv("SOLANA_RPC",     "https://api.mainnet-beta.solana.com")
 TWITTER_BEARER = os.getenv("TWITTER_BEARER", "")
 BACKEND_URL    = os.getenv("BACKEND_URL",    "http://localhost:3001")
+X_SOURCE       = os.getenv("X_SOURCE", "auto").strip().lower()
+RSS_FEEDS      = [u.strip() for u in os.getenv("RSS_FEEDS", "").split(",") if u.strip()]
 
 BAGS_TWITTER_ID = "1609677817947537408"   # @BagsApp Twitter/X user ID
 OG_START        = datetime(2024, 1, 5, tzinfo=timezone.utc)
@@ -71,6 +74,7 @@ store = {
     "last_tweet_id":  None, # 마지막 체크한 트윗 ID
     "last_milestone": 0,    # 마지막 알림 마일스톤
     "launch_data":    {},   # tg_id  → { name, symbol } (launch conversation state)
+    "rss_state":      {},   # feed_url -> { etag, last_modified, last_entry_id }
 }
 
 # ─── UTILS ───────────────────────────────────────────────────────
@@ -285,63 +289,216 @@ async def welcome_new_member(bot: Bot, signer: dict, rank: int):
         log.warning(f"그룹 환영 메시지 실패: {e}")
 
 
-async def bags_twitter_monitor(bot: Bot):
-    """bags.fm 공식 트위터 새 트윗 모니터링 (Twitter API v2)."""
-    if not TWITTER_BEARER:
+def _rss_child_text(node: ET.Element, names: list[str]) -> str:
+    for n in names:
+        found = node.find(n)
+        if found is not None and found.text:
+            return found.text.strip()
+    return ""
+
+
+def _parse_rss_items(xml_text: str) -> list[dict]:
+    items: list[dict] = []
+    root = ET.fromstring(xml_text)
+
+    channel = root.find("channel")
+    if channel is not None:
+        nodes = channel.findall("item")
+        for item in nodes:
+            title = _rss_child_text(item, ["title"])
+            link = _rss_child_text(item, ["link"])
+            guid = _rss_child_text(item, ["guid"])
+            pub_date = _rss_child_text(item, ["pubDate"])
+            desc = _rss_child_text(item, ["description"])
+            entry_id = guid or link or hashlib.sha256(f"{title}|{pub_date}".encode("utf-8")).hexdigest()
+            items.append({
+                "id": entry_id,
+                "title": title,
+                "link": link,
+                "published": pub_date,
+                "summary": desc,
+            })
+        return items
+
+    atom_ns = {"a": "http://www.w3.org/2005/Atom"}
+    for entry in root.findall("a:entry", atom_ns):
+        title = _rss_child_text(entry, ["{http://www.w3.org/2005/Atom}title"])
+        link_node = entry.find("a:link", atom_ns)
+        link = link_node.get("href", "") if link_node is not None else ""
+        entry_id = _rss_child_text(entry, ["{http://www.w3.org/2005/Atom}id"]) or link
+        published = _rss_child_text(entry, ["{http://www.w3.org/2005/Atom}published", "{http://www.w3.org/2005/Atom}updated"])
+        summary = _rss_child_text(entry, ["{http://www.w3.org/2005/Atom}summary", "{http://www.w3.org/2005/Atom}content"])
+        if not entry_id:
+            entry_id = hashlib.sha256(f"{title}|{published}".encode("utf-8")).hexdigest()
+        items.append({
+            "id": entry_id,
+            "title": title,
+            "link": link,
+            "published": published,
+            "summary": summary,
+        })
+    return items
+
+
+async def _rss_monitor(bot: Bot):
+    if not RSS_FEEDS:
         return
 
-    url = f"https://api.twitter.com/2/users/{BAGS_TWITTER_ID}/tweets"
-    headers = {"Authorization": f"Bearer {TWITTER_BEARER}"}
-    params = {
-        "max_results": 5,
-        "tweet.fields": "created_at,text",
-        **({"since_id": store["last_tweet_id"]} if store["last_tweet_id"] else {})
-    }
+    for feed_url in RSS_FEEDS:
+        state = store["rss_state"].get(feed_url, {})
+        headers: dict[str, str] = {}
+        if state.get("etag"):
+            headers["If-None-Match"] = state["etag"]
+        if state.get("last_modified"):
+            headers["If-Modified-Since"] = state["last_modified"]
 
-    try:
-        async with aiohttp.ClientSession() as sess:
-            async with sess.get(url, headers=headers, params=params,
-                                timeout=aiohttp.ClientTimeout(total=10)) as r:
-                if r.status != 200:
-                    return
-                data = await r.json()
+        try:
+            async with aiohttp.ClientSession() as sess:
+                async with sess.get(feed_url, headers=headers, timeout=aiohttp.ClientTimeout(total=12)) as r:
+                    if r.status == 304:
+                        continue
+                    if r.status != 200:
+                        log.warning(f"RSS 모니터링 HTTP 오류 ({r.status}): {feed_url}")
+                        continue
 
-        tweets = data.get("data", [])
-        if not tweets:
-            return
+                    raw = await r.text()
+                    etag = r.headers.get("ETag", "")
+                    last_modified = r.headers.get("Last-Modified", "")
 
-        # 최신 트윗 ID 저장
-        store["last_tweet_id"] = tweets[0]["id"]
+            items = _parse_rss_items(raw)
+            if not items:
+                continue
 
-        for tweet in reversed(tweets):  # 오래된 것부터
-            text     = tweet["text"]
-            tweet_id = tweet["id"]
-            created  = tweet.get("created_at", "")
+            latest_id = items[0]["id"]
+            last_id = state.get("last_entry_id")
 
-            # OG 관련 키워드 체크
-            og_keywords = ["og", "reward", "보상", "early", "supporter", "airdrop", "token"]
-            is_og_related = any(kw in text.lower() for kw in og_keywords)
+            # 초기 실행 시 기존 글 대량 전송 방지
+            if not last_id:
+                store["rss_state"][feed_url] = {
+                    "etag": etag,
+                    "last_modified": last_modified,
+                    "last_entry_id": latest_id,
+                }
+                continue
 
-            flag = "🚨 *OG 관련 트윗 감지!*\n\n" if is_og_related else "📡 *@BagsApp 새 트윗*\n\n"
+            new_items: list[dict] = []
+            for entry in items:
+                if entry["id"] == last_id:
+                    break
+                new_items.append(entry)
 
-            channel_text = (
-                f"{flag}"
-                f"_{text[:280]}_\n\n"
-                f"🔗 [트윗 보기](https://twitter.com/BagsApp/status/{tweet_id})\n"
-                f"🕐 {created[:10] if created else '방금'}\n\n"
-                f"{'⚠️ OG 보상 관련 내용인지 확인하세요!' if is_og_related else ''}"
-                f"\n#BagsOG #OGLedger"
-            )
+            if not new_items:
+                store["rss_state"][feed_url] = {
+                    "etag": etag,
+                    "last_modified": last_modified,
+                    "last_entry_id": latest_id,
+                }
+                continue
 
-            kb = InlineKeyboardMarkup([[
-                InlineKeyboardButton("트윗 확인", url=f"https://twitter.com/BagsApp/status/{tweet_id}"),
-                InlineKeyboardButton("💬 토론", url=f"https://t.me/OGLedgerChat")
-            ]])
-            await post_to_channel(bot, channel_text, kb=kb)
-            await asyncio.sleep(1)
+            for entry in reversed(new_items[:5]):
+                title = entry["title"][:160] if entry["title"] else "(제목 없음)"
+                summary = (entry["summary"] or "").replace("\n", " ").strip()
+                if len(summary) > 220:
+                    summary = summary[:220] + "..."
 
-    except Exception as e:
-        log.warning(f"Twitter 모니터링 오류: {e}")
+                text = (
+                    "📡 *공지 피드 업데이트*\n\n"
+                    f"*{title}*\n"
+                    f"{summary}\n\n"
+                    f"🔗 {entry['link'] or feed_url}\n"
+                    f"🕐 {entry['published'] or '방금'}\n\n"
+                    "#BagsOG #OGLedger"
+                )
+
+                kb = InlineKeyboardMarkup([[
+                    InlineKeyboardButton("원문 보기", url=entry["link"] or feed_url),
+                    InlineKeyboardButton("💬 토론", url="https://t.me/OGLedgerChat")
+                ]])
+                await post_to_channel(bot, text, kb=kb)
+                await asyncio.sleep(1)
+
+            store["rss_state"][feed_url] = {
+                "etag": etag,
+                "last_modified": last_modified,
+                "last_entry_id": latest_id,
+            }
+
+        except Exception as e:
+            log.warning(f"RSS 모니터링 오류 ({feed_url}): {e}")
+
+
+async def bags_twitter_monitor(bot: Bot):
+    """공식 X API 또는 RSS 피드로 공지 모니터링."""
+    use_api = TWITTER_BEARER and (X_SOURCE in ("auto", "api"))
+    use_rss = RSS_FEEDS and (X_SOURCE in ("auto", "rss"))
+
+    if use_api:
+        url = f"https://api.twitter.com/2/users/{BAGS_TWITTER_ID}/tweets"
+        headers = {"Authorization": f"Bearer {TWITTER_BEARER}"}
+        params = {
+            "max_results": 5,
+            "tweet.fields": "created_at,text",
+            **({"since_id": store["last_tweet_id"]} if store["last_tweet_id"] else {})
+        }
+
+        try:
+            async with aiohttp.ClientSession() as sess:
+                async with sess.get(url, headers=headers, params=params,
+                                    timeout=aiohttp.ClientTimeout(total=10)) as r:
+                    if r.status != 200:
+                        return
+                    data = await r.json()
+
+            tweets = data.get("data", [])
+            if not tweets:
+                return
+
+            # 최신 트윗 ID 저장
+            store["last_tweet_id"] = tweets[0]["id"]
+
+            for tweet in reversed(tweets):  # 오래된 것부터
+                text     = tweet["text"]
+                tweet_id = tweet["id"]
+                created  = tweet.get("created_at", "")
+
+                # OG 관련 키워드 체크
+                og_keywords = ["og", "reward", "보상", "early", "supporter", "airdrop", "token"]
+                is_og_related = any(kw in text.lower() for kw in og_keywords)
+
+                flag = "🚨 *OG 관련 트윗 감지!*\n\n" if is_og_related else "📡 *@BagsApp 새 트윗*\n\n"
+
+                channel_text = (
+                    f"{flag}"
+                    f"_{text[:280]}_\n\n"
+                    f"🔗 [트윗 보기](https://twitter.com/BagsApp/status/{tweet_id})\n"
+                    f"🕐 {created[:10] if created else '방금'}\n\n"
+                    f"{'⚠️ OG 보상 관련 내용인지 확인하세요!' if is_og_related else ''}"
+                    f"\n#BagsOG #OGLedger"
+                )
+
+                kb = InlineKeyboardMarkup([[
+                    InlineKeyboardButton("트윗 확인", url=f"https://twitter.com/BagsApp/status/{tweet_id}"),
+                    InlineKeyboardButton("💬 토론", url=f"https://t.me/OGLedgerChat")
+                ]])
+                await post_to_channel(bot, channel_text, kb=kb)
+                await asyncio.sleep(1)
+
+        except Exception as e:
+            log.warning(f"Twitter 모니터링 오류: {e}")
+        return
+
+    if use_rss:
+        await _rss_monitor(bot)
+        return
+
+    if X_SOURCE == "api" and not TWITTER_BEARER:
+        log.info("X_SOURCE=api 이지만 TWITTER_BEARER가 없어 모니터링을 건너뜁니다.")
+    elif X_SOURCE == "rss" and not RSS_FEEDS:
+        log.info("X_SOURCE=rss 이지만 RSS_FEEDS가 비어 있어 모니터링을 건너뜁니다.")
+    elif X_SOURCE == "disabled":
+        return
+    else:
+        return
 
 
 # ─── BOT COMMANDS ────────────────────────────────────────────────
@@ -1012,7 +1169,7 @@ def setup_scheduler(bot) -> AsyncIOScheduler:
         name="Twitter Monitor"
     )
 
-    log.info("스케줄러 설정 완료 (매일 00:00 카운터 · 30분 트위터 체크)")
+    log.info("스케줄러 설정 완료 (매일 00:00 카운터 · 30분 공지 모니터링)")
     return scheduler
 
 
@@ -1034,7 +1191,15 @@ def main():
     log.info(f"  BAGS 지갑: {BAGS_WALLET[:20]}...")
     log.info(f"  RPC: {SOLANA_RPC}")
     log.info(f"  Backend API: {BACKEND_URL}")
-    log.info(f"  Twitter 모니터링: {'ON' if TWITTER_BEARER else 'OFF'}")
+    if X_SOURCE == "disabled":
+        monitor_mode = "OFF"
+    elif TWITTER_BEARER and X_SOURCE in ("auto", "api"):
+        monitor_mode = "X API"
+    elif RSS_FEEDS and X_SOURCE in ("auto", "rss"):
+        monitor_mode = "RSS"
+    else:
+        monitor_mode = "OFF"
+    log.info(f"  공지 모니터링: {monitor_mode}")
     log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     app = (
