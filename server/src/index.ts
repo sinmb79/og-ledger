@@ -8,6 +8,7 @@ import claimRouter from "./routes/claim";
 import swapRouter from "./routes/swap";
 import analyticsRouter from "./routes/analytics";
 import ogRouter from "./routes/og";
+import nftRouter from "./routes/nft";
 import { errorHandler } from "./middleware/error-handler";
 import { apiKeyAuth } from "./middleware/auth";
 import { rateLimiter } from "./middleware/rate-limit";
@@ -31,6 +32,7 @@ app.use(claimRouter);
 app.use(swapRouter);
 app.use(analyticsRouter);
 app.use(ogRouter);
+app.use(nftRouter);
 
 app.use(errorHandler);
 
