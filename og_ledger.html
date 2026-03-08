@@ -823,8 +823,8 @@ section {
   margin-top: 2px;
 }
 
-/* ── 04 SIGN ── */
-#sign { }
+/* ── 04 REWARDS ── */
+#rewards { }
 
 .sign-layout {
   display: grid;
@@ -832,7 +832,7 @@ section {
   gap: 32px;
 }
 
-.petition-card {
+.community-card {
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 20px;
@@ -840,7 +840,7 @@ section {
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
-.petition-count {
+.community-count {
   font-size: 56px;
   font-weight: 800;
   letter-spacing: -3px;
@@ -849,13 +849,13 @@ section {
   margin-bottom: 4px;
 }
 
-.petition-count-label {
+.community-count-label {
   font-size: 13px;
   color: var(--muted);
   margin-bottom: 28px;
 }
 
-.petition-text {
+.community-text {
   font-size: 14px;
   color: var(--ink);
   line-height: 1.8;
@@ -864,9 +864,9 @@ section {
   border-top: 1px solid var(--border);
 }
 
-.petition-text strong { font-weight: 700; }
+.community-text strong { font-weight: 700; }
 
-.demand-list {
+.feature-list {
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -874,7 +874,7 @@ section {
   margin-bottom: 28px;
 }
 
-.demand-list li {
+.feature-list li {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -882,7 +882,7 @@ section {
   color: var(--ink);
 }
 
-.demand-list li::before {
+.feature-list li::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -1171,7 +1171,7 @@ footer {
     <li><a href="#scan">Scan</a></li>
     <li><a href="#ledger">Ledger</a></li>
     <li><a href="#nft">NFT</a></li>
-    <li><a href="#sign">Sign</a></li>
+    <li><a href="#rewards">Rewards</a></li>
     <li><a href="https://t.me/OGLedgerChat" class="nav-cta">Join →</a></li>
   </ul>
 </nav>
@@ -1270,7 +1270,7 @@ footer {
         <button class="btn-xs" onclick="exportCSV()">↓ CSV</button>
         <button class="btn-xs" onclick="exportJSON()">↓ JSON</button>
         <button class="btn-xs" onclick="copyAddrs()">⎘ Copy addresses</button>
-        <button class="btn-xs" onclick="pushToSign()" style="background:#f0fdf4;border-color:#bbf7d0;color:#15803d">→ Add to signers</button>
+        <button class="btn-xs" onclick="pushToSign()" style="background:#f0fdf4;border-color:#bbf7d0;color:#15803d">→ Add to members</button>
       </div>
     </div>
     <div class="filter-row">
@@ -1326,9 +1326,9 @@ footer {
       <div class="kpi-unit">wallets verified</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">OG Reward Program</div>
-      <div class="kpi-val" style="color:#ef4444">$0</div>
-      <div class="kpi-unit">systematic rewards paid</div>
+      <div class="kpi-label">Fee Share Revenue</div>
+      <div class="kpi-val green">Coming Soon</div>
+      <div class="kpi-unit">via Bags API partner fees</div>
     </div>
   </div>
 
@@ -1349,14 +1349,14 @@ footer {
       <div class="meter-pct partial">15%</div>
     </div>
     <div class="meter-item">
-      <div class="meter-name">Ongoing OG revenue share</div>
-      <div class="meter-track"><div class="meter-fill zero" data-w="0"></div></div>
-      <div class="meter-pct zero">0%</div>
+      <div class="meter-name">Fee Share Infrastructure</div>
+      <div class="meter-track"><div class="meter-fill partial" data-w="30"></div></div>
+      <div class="meter-pct partial">30%</div>
     </div>
     <div class="meter-item">
-      <div class="meter-name">OG governance / voting</div>
-      <div class="meter-track"><div class="meter-fill zero" data-w="0"></div></div>
-      <div class="meter-pct zero">0%</div>
+      <div class="meter-name">Community Token Launches</div>
+      <div class="meter-track"><div class="meter-fill partial" data-w="20"></div></div>
+      <div class="meter-pct partial">20%</div>
     </div>
   </div>
 
@@ -1390,15 +1390,15 @@ footer {
       <div class="tl-col"><div class="tl-dot"></div><div class="tl-line"></div></div>
       <div>
         <div class="tl-title">Hackathon · $4M funding <span class="tl-badge done">Done</span></div>
-        <div class="tl-desc">bags.fm Hackathon launched with $4M+ in funding. Platform growth continued without OG reward plan.</div>
+        <div class="tl-desc">bags.fm Hackathon launched with $4M+ in funding. OG LEDGER built as community rewards infrastructure.</div>
       </div>
     </div>
-    <div class="tl-item fail">
+    <div class="tl-item done">
       <div class="tl-date">Today</div>
       <div class="tl-col"><div class="tl-dot"></div><div class="tl-line"></div></div>
       <div>
-        <div class="tl-title">OG reward program <span class="tl-badge fail">Pending</span></div>
-        <div class="tl-desc">No systematic revenue share, governance rights, or ongoing OG benefits have been officially announced.</div>
+        <div class="tl-title">OG community rewards <span class="tl-badge done">Live</span></div>
+        <div class="tl-desc">OG LEDGER launches community rewards infrastructure with Bags API integration. Fee sharing, token launches, and reward claiming now available.</div>
       </div>
     </div>
   </div>
@@ -1482,41 +1482,40 @@ footer {
 
 <div class="section-divider"></div>
 
-<!-- 04 SIGN -->
-<section id="sign">
-  <div class="section-eyebrow">04 — Sign</div>
-  <h2 class="section-title">Add your voice.</h2>
+<!-- 04 REWARDS -->
+<section id="rewards">
+  <div class="section-eyebrow">04 — Rewards</div>
+  <h2 class="section-title">Earn rewards.</h2>
   <p class="section-desc">
-    Verified OG members can sign the collective petition. On-chain proof of support.
+    Verified OG members can launch tokens, claim fees, and earn rewards through the Bags API.
   </p>
 
   <div class="sign-layout fade-in">
-    <div class="petition-card">
-      <div class="petition-count" id="sign-count">0</div>
-      <div class="petition-count-label">OG members signed · <span id="sign-sol">0</span> SOL total</div>
+    <div class="community-card">
+      <div class="community-count" id="sign-count">0</div>
+      <div class="community-count-label">Community Stats · <span id="sign-sol">0</span> SOL tracked</div>
 
-      <div class="petition-text">
-        We are bags.fm OG members who invested directly in the platform in early 2024.<br><br>
-        We ask bags.fm to:
+      <div class="community-text">
+        OG members are building the rewards layer together through verified on-chain participation.
       </div>
 
-      <ul class="demand-list">
-        <li>Publish an official OG reward roadmap</li>
-        <li>Define OG revenue share terms clearly</li>
-        <li>Send an open letter to OG members</li>
-        <li>Review retroactive compensation options</li>
+      <ul class="feature-list">
+        <li>Launch tokens via Bags API</li>
+        <li>Earn 25% partner fees on trading volume</li>
+        <li>Claim accumulated rewards</li>
+        <li>Track analytics and community metrics</li>
       </ul>
 
       <div class="sol-total">
-        Total invested: <strong id="sign-sol-total">—</strong> SOL · <strong id="sign-days">—</strong> days waiting
+        Total invested: <strong id="sign-sol-total">—</strong> SOL · <strong id="sign-days">—</strong> days building
       </div>
     </div>
 
     <div>
       <div class="verify-card">
-        <div class="verify-title">Verify & Sign</div>
+        <div class="verify-title">Verify & Register</div>
         <div class="verify-desc">
-          Enter your Solana wallet address. We'll verify your OG status on-chain and add your signature.
+          Enter your Solana wallet address. We'll verify your OG status on-chain and register you as an OG member.
         </div>
 
         <div class="form-group">
@@ -1529,19 +1528,19 @@ footer {
         </div>
 
         <button class="btn-primary" onclick="verifyAndSign()" id="verify-btn" style="width:100%">
-          Verify OG status & Sign
+          Verify OG status & Register
         </button>
 
         <div class="verify-result" id="verify-result"></div>
       </div>
 
       <div style="margin-top:14px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Or sign via Telegram</div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Or register via Telegram</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">
           In <strong style="color:var(--ink)">@OGLedgerChat</strong>:<br>
           <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px">/verify [wallet]</code>
           then
-          <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px">/sign</code>
+          <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px">/register</code>
         </div>
         <a href="https://t.me/OGLedgerChat" class="btn-tg" style="font-size:13px;padding:10px 20px">Open Telegram →</a>
       </div>
@@ -1549,9 +1548,9 @@ footer {
   </div>
 
   <div class="signers-section fade-in">
-    <div class="signers-title">Signed OG Members <span style="color:var(--muted);font-size:13px;font-weight:400" id="signers-count">(0)</span></div>
+    <div class="signers-title">Registered OG Members <span style="color:var(--muted);font-size:13px;font-weight:400" id="signers-count">(0)</span></div>
     <div class="signers-grid" id="signers-grid">
-      <div style="color:var(--muted);font-size:13px;grid-column:1/-1">No signers yet. Be the first.</div>
+      <div style="color:var(--muted);font-size:13px;grid-column:1/-1">No members yet. Be the first.</div>
     </div>
   </div>
 </section>
@@ -1563,13 +1562,12 @@ footer {
       <h2 class="tg-title">Join the OG<br>community.</h2>
       <p class="tg-desc">
         The OG LEDGER Telegram is where verified OG members gather.
-        Sign the petition, share updates, and coordinate as a group.
+        Launch tokens, claim rewards, and track your earnings as an OG member.
       </p>
       <div class="tg-commands">
         <div class="tg-cmd"><span>/verify</span> [wallet]</div>
-        <div class="tg-cmd"><span>/sign</span></div>
+        <div class="tg-cmd"><span>/register</span></div>
         <div class="tg-cmd"><span>/status</span></div>
-        <div class="tg-cmd"><span>/demand</span></div>
         <div class="tg-cmd"><span>/list</span></div>
       </div>
     </div>
@@ -1587,7 +1585,7 @@ footer {
       <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
       OG LEDGER
     </div>
-    <div class="footer-note">On-chain data · Solana Mainnet · bags.fm OG Protocol</div>
+    <div class="footer-note">On-chain data · Solana Mainnet · bags.fm OG Community Rewards</div>
     <div class="footer-links">
       <a href="https://t.me/OGLedgerChannel">Channel</a>
       <a href="https://t.me/OGLedgerChat">Chat</a>
@@ -1597,6 +1595,9 @@ footer {
 </footer>
 
 <script>
+// ── CONFIG ──
+const API_BASE = 'http://localhost:3001';
+
 // ── STATE ──
 let allInvestors = [], filteredInvestors = [], signers = [];
 let sortField = 'totalSol', sortDir = -1, currentFilter = 'all';
@@ -1615,6 +1616,42 @@ function initCounters() {
   document.getElementById('hero-sol').textContent = '—';
 }
 initCounters();
+
+// ── LOAD COMMUNITY DATA ──
+async function loadCommunityData() {
+  try {
+    const statsRes = await fetch(`${API_BASE}/api/og/stats`);
+    if (statsRes.ok) {
+      const statsData = await statsRes.json();
+      if (statsData.success && statsData.data) {
+        const { count, totalSol, sol3Count, sol15Count } = statsData.data;
+        document.getElementById('hero-signers').textContent = count || '—';
+        document.getElementById('hero-sol').textContent = totalSol ? totalSol.toFixed(1) : '—';
+        document.getElementById('ledger-investors').textContent = count || '—';
+        document.getElementById('sign-count').textContent = count || '—';
+        document.getElementById('sign-sol').textContent = totalSol ? totalSol.toFixed(1) : '—';
+        document.getElementById('sign-sol-total').textContent = totalSol ? totalSol.toFixed(1) : '—';
+      }
+    }
+
+    const registryRes = await fetch(`${API_BASE}/api/og/registry`);
+    if (registryRes.ok) {
+      const registryData = await registryRes.json();
+      if (registryData.success && registryData.data && registryData.data.members) {
+        const members = registryData.data.members.map(m => ({
+          address: m.wallet,
+          sol: m.sol_amount,
+          name: null,
+          verified: true
+        }));
+        signers = members;
+        renderSigners();
+      }
+    }
+  } catch (e) {
+  }
+}
+loadCommunityData();
 
 // ── INTERSECTION OBSERVER ──
 const io = new IntersectionObserver(entries => {
@@ -1808,7 +1845,16 @@ function dl(content,name,type){const a=document.createElement('a');a.href=URL.cr
 function exportCSV(){const rows=[['#','Wallet','SOL','Txns','First'],...filteredInvestors.map((inv,i)=>[i+1,inv.address,inv.totalSol.toFixed(2),inv.txCount,fmtDate(inv.firstDate)])];dl('\uFEFF'+rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n'),'bags_og_investors.csv','text/csv');}
 function exportJSON(){dl(JSON.stringify({exported_at:new Date().toISOString(),total:filteredInvestors.length,investors:filteredInvestors},null,2),'bags_og_investors.json','application/json');}
 function copyAddrs(){navigator.clipboard.writeText(filteredInvestors.map(r=>r.address).join('\n')).then(()=>alert(`${filteredInvestors.length} addresses copied`));}
-function pushToSign(){updateSigners(filteredInvestors.map(inv=>({address:inv.address,sol:inv.totalSol,name:null,verified:true})));document.getElementById('sign').scrollIntoView({behavior:'smooth'});}
+async function pushToSign(){
+  updateSigners(filteredInvestors.map(inv=>({address:inv.address,sol:inv.totalSol,name:null,verified:true})));
+  document.getElementById('rewards').scrollIntoView({behavior:'smooth'});
+  for (const inv of filteredInvestors) {
+    try {
+      await fetch(`${API_BASE}/api/og/verify/${inv.address}`);
+      await sleep(100);
+    } catch (e) {}
+  }
+}
 
 // ── SIGN ──
 function updateSigners(list) {
@@ -1823,7 +1869,7 @@ function renderSigners() {
   document.getElementById('sign-sol-total').textContent=total.toFixed(1);
   document.getElementById('signers-count').textContent=`(${signers.length})`;
   const grid=document.getElementById('signers-grid');
-  if (!signers.length){grid.innerHTML='<div style="color:var(--muted);font-size:13px;grid-column:1/-1">No signers yet. Be the first.</div>';return;}
+  if (!signers.length){grid.innerHTML='<div style="color:var(--muted);font-size:13px;grid-column:1/-1">No members yet. Be the first.</div>';return;}
   grid.innerHTML=signers.map(s=>`
     <div class="signer-chip">
       <div class="chip-dot"></div>
@@ -1837,47 +1883,28 @@ async function verifyAndSign() {
   const name=document.getElementById('my-name').value.trim();
   const resultEl=document.getElementById('verify-result');
   if (!wallet||wallet.length<32){resultEl.style.display='block';resultEl.className='verify-result fail';resultEl.textContent='Please enter a valid Solana wallet address.';return;}
-  if (signers.find(s=>s.address===wallet)){resultEl.style.display='block';resultEl.className='verify-result fail';resultEl.textContent='This wallet has already signed.';return;}
+  if (signers.find(s=>s.address===wallet)){resultEl.style.display='block';resultEl.className='verify-result fail';resultEl.textContent='This wallet has already been registered.';return;}
   resultEl.style.display='block';resultEl.className='verify-result loading';resultEl.textContent='Verifying on-chain...';
   document.getElementById('verify-btn').disabled=true;
   try {
-    const endpoint=getRpc();
-    const targetWallet=document.getElementById('cfg-wallet').value.trim();
-    const from=new Date('2024-01-01').getTime()/1000, to=new Date('2024-04-01').getTime()/1000;
-    const tol=0.002;
-    const sigs=await rpcCall('getSignaturesForAddress',[wallet,{limit:200}])||[];
-    const inRange=sigs.filter(s=>s.blockTime&&s.blockTime>=from&&s.blockTime<=to);
-    let found=0;
-    for (const sig of inRange.slice(0,50)) {
-      try {
-        const tx=await rpcCall('getTransaction',[sig.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0}]);
-        if (!tx?.meta) continue;
-        const accs=tx.transaction?.message?.accountKeys||[];
-        const pre=tx.meta.preBalances||[],post=tx.meta.postBalances||[];
-        const addr=a=>typeof a==='string'?a:a.pubkey;
-        const wi=accs.findIndex(a=>addr(a)===wallet);
-        const ti=accs.findIndex(a=>addr(a)===targetWallet);
-        if (wi===-1||ti===-1) continue;
-        const sent=lamToSol(pre[wi]-post[wi]);
-        const recv=lamToSol(post[ti]-pre[ti]);
-        for (const t of [1.5,3]) {
-          if (Math.abs(sent-t)<=tol||Math.abs(recv-t)<=tol){found=t;break;}
-        }
-        if (found) break;
-      } catch(e){continue;}
-    }
-    if (!found) {const sc=allInvestors.find(inv=>inv.address===wallet);if(sc)found=sc.totalSol;}
-    if (found) {
-      resultEl.className='verify-result success';
-      resultEl.innerHTML=`✓ OG verified! ${found} SOL transfer confirmed (Jan–Mar 2024).<br>Your signature has been added.`;
-      updateSigners([{address:wallet,sol:found,name:name||null,verified:true}]);
+    const res = await fetch(`${API_BASE}/api/og/verify/${wallet}`);
+    const data = await res.json();
+    if (data.success && data.data) {
+      if (data.data.verified) {
+        resultEl.className='verify-result success';
+        resultEl.innerHTML=`✓ OG verified! ${data.data.solAmount} SOL transfer confirmed (Jan–Mar 2024).<br>You have been registered as OG member.`;
+        updateSigners([{address:wallet,sol:data.data.solAmount,name:name||null,verified:true}]);
+      } else {
+        resultEl.className='verify-result fail';
+        resultEl.innerHTML=data.data.reason || 'No 1.5/3 SOL transfer found from this wallet to bags official wallet in Jan–Mar 2024.<br><br>Please check the wallet address and try again.';
+      }
     } else {
       resultEl.className='verify-result fail';
-      resultEl.innerHTML=`No 1.5/3 SOL transfer found from this wallet to bags official wallet in Jan–Mar 2024.<br><br>Please check the wallet address and try again.`;
+      resultEl.innerHTML='Verification failed. Please try again.';
     }
   } catch(e) {
     resultEl.className='verify-result fail';
-    resultEl.innerHTML=`RPC error: ${e.message}<br>Try again later.`;
+    resultEl.innerHTML=`API error: ${e.message}<br>Try again later.`;
   } finally { document.getElementById('verify-btn').disabled=false; }
 }
 </script>

@@ -11,7 +11,7 @@
     │
     └── 봇 추가
     
-🤖 봇    @OGLedgerBot       ← 인증/서명/자동포스팅
+🤖 봇    @OGLedgerBot       ← 인증/등록/리워드 자동포스팅
 ```
 
 ---
@@ -31,10 +31,10 @@ username: OGLedgerBot
 봇 설정:
 ```
 /setdescription
-→ bags.fm OG 멤버 집단 청원 봇 | OG Member Accountability Protocol
+→ bags.fm OG 커뮤니티 보상 봇 | OG Community Rewards Bot
 
 /setabouttext  
-→ /verify [지갑] → /sign 으로 OG 청원에 참여하세요
+→ /verify [지갑] → /register 로 OG 커뮤니티에 참여하세요
 
 /setuserpic
 → OG LEDGER 로고 이미지 업로드
@@ -47,10 +47,12 @@ username: OGLedgerBot
 ```
 start - OG LEDGER 시작 / Start
 verify - OG 자격 인증 / Verify OG status
-sign - 청원 서명 / Sign petition
-status - 서명 현황 / View status
-demand - 공식 요구문 / Official demand
-list - 서명자 목록 / List signers
+register - OG 등록 / Register as OG
+launch - 토큰 런칭 / Launch token
+claim - 수수료 청구 / Claim fees
+portfolio - 포트폴리오 / Portfolio
+status - 커뮤니티 현황 / View status
+list - 등록 멤버 목록 / List members
 ```
 
 ---
@@ -62,7 +64,7 @@ list - 서명자 목록 / List signers
 3. 설명:
    ```
    bags.fm OG 멤버 공식 채널
-   Official channel for bags.fm OG member accountability
+   Official channel for bags.fm OG community rewards
    
    💬 토론 그룹: @OGLedgerChat
    🌐 웹앱: og-ledger.xyz
@@ -84,7 +86,7 @@ list - 서명자 목록 / List signers
 3. 설명:
    ```
    bags.fm OG 멤버 토론 그룹
-   /verify [지갑주소] 로 OG 인증 후 /sign 으로 청원 참여
+    /verify [지갑주소] 로 OG 인증 후 /register 로 커뮤니티 등록
    
    📢 공지 채널: @OGLedgerChannel
    🌐 og-ledger.xyz
@@ -185,7 +187,7 @@ python telegram_bot_v2.py
 - [ ] `python telegram_bot_v2.py` 실행 확인
 - [ ] 그룹에서 `/start` 테스트
 - [ ] 본인 지갑으로 `/verify` 테스트
-- [ ] `/sign` 테스트 → 채널 자동 포스팅 확인
+- [ ] `/register` 테스트 → 채널 자동 포스팅 확인
 - [ ] 웹앱 `og_ledger.html` Telegram 링크 업데이트
 
 ---
@@ -195,26 +197,26 @@ python telegram_bot_v2.py
 ```
 📌 OG LEDGER 채널에 오신 것을 환영합니다
 
-bags.fm은 2024년 1월 OG 멤버를 모집했습니다.
-수백 명이 1.5~3 SOL을 직접 투자했습니다.
-그 기록은 Solana 블록체인에 영원히 남아 있습니다.
-
-오늘로 [N]일째, 체계적 보상은 없습니다.
+OG LEDGER는 bags.fm OG 멤버를 위한 커뮤니티 보상 인프라입니다.
+2024년 초기 참여 지갑(1.5~3 SOL)을 온체인으로 검증하고,
+토큰 런칭 · 수수료 청구 · 포트폴리오 추적 기능을 제공합니다.
 
 ━━━━━━━━━━━━━━━━━
 
 이 채널은:
-📊 매일 경과일 카운터 자동 포스팅
-✍️ 새 서명자 현황 실시간 업데이트
+📊 커뮤니티 지표 및 보상 현황 자동 업데이트
+🚀 신규 토큰 런칭 소식 공유
 📡 bags.fm 공식 트위터 모니터링 알림
 
 ━━━━━━━━━━━━━━━━━
 
-OG 멤버라면 → @OGLedgerChat 에서 서명
-/verify [지갑주소] → /sign
+OG 멤버라면 → @OGLedgerChat 에서 등록 시작
+/verify [지갑주소] → /register
+
+추가 명령어: /launch /claim /portfolio /status /list
 
 🌐 og-ledger.xyz
-#BagsOG #OGLedger
+#BagsOG #OGLedger #BagsFM
 ```
 
 ---
