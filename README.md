@@ -99,6 +99,17 @@ pip install python-telegram-bot aiohttp apscheduler
 python telegram_bot_v2.py
 ```
 
+### NFT Mint Flow (OG Badge)
+
+The project now includes a backend-assisted Solana NFT mint flow:
+
+1. `POST /api/nft/prepare-mint` returns an unsigned serialized transaction + mint address.
+2. Frontend (Phantom) signs the transaction.
+3. `POST /api/transaction/send` broadcasts the signed transaction.
+4. `POST /api/nft/record-mint` stores mint signature metadata.
+
+In the UI, use the **Mint OG Badge NFT** section.
+
 ### Free-First Setup (Korean)
 
 비개발자용 무료 운영 가이드는 아래 문서를 참고하세요.

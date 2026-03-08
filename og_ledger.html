@@ -1578,6 +1578,57 @@ footer {
   </div>
 </div>
 
+<!-- NFT MINT -->
+<section id="nft-mint" class="fade-in" style="padding-top:40px;">
+  <div class="section-eyebrow">NFT</div>
+  <h2 class="section-title">Mint OG Badge NFT</h2>
+  <p class="section-desc" style="margin-bottom:20px;max-width:700px;">
+    Create a 1/1 Solana NFT badge. The server prepares an unsigned mint transaction, your wallet signs it,
+    and then the signed transaction is broadcast.
+  </p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px;">
+      <div class="form-group">
+        <label class="form-label">Creator Wallet</label>
+        <input class="form-input" id="nft-creator" placeholder="Connect wallet or paste address" />
+      </div>
+      <button class="btn-secondary" onclick="connectNftWallet()" style="width:100%;margin-bottom:10px;">Connect Phantom</button>
+
+      <div class="form-group">
+        <label class="form-label">NFT Name (<=32)</label>
+        <input class="form-input" id="nft-name" placeholder="OG LEDGER Badge" maxlength="32" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Symbol (<=10)</label>
+        <input class="form-input" id="nft-symbol" placeholder="OGBADGE" maxlength="10" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Metadata URI</label>
+        <input class="form-input" id="nft-uri" placeholder="https://.../metadata.json or ipfs://..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Royalty BPS (optional)</label>
+        <input class="form-input" id="nft-bps" placeholder="0" />
+      </div>
+
+      <button class="btn-primary" onclick="prepareNftMint()" id="nft-prepare-btn" style="width:100%;margin-bottom:10px;">
+        1) Prepare Mint Transaction
+      </button>
+      <button class="btn-primary" onclick="signAndMintNft()" id="nft-mint-btn" style="width:100%;">
+        2) Sign & Mint NFT
+      </button>
+
+      <div class="verify-result" id="nft-result" style="margin-top:12px;display:none;"></div>
+    </div>
+
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Last Prepared NFT</div>
+      <div id="nft-summary" style="font-size:13px;color:var(--muted);line-height:1.6;">No prepared transaction yet.</div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -1594,6 +1645,7 @@ footer {
   </div>
 </footer>
 
+<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 <script>
 // ── CONFIG ──
 const API_BASE = 'http://localhost:3001';
@@ -1602,6 +1654,8 @@ const API_BASE = 'http://localhost:3001';
 let allInvestors = [], filteredInvestors = [], signers = [];
 let sortField = 'totalSol', sortDir = -1, currentFilter = 'all';
 let shouldStop = false, scanning = false;
+let pendingNftTx = null;
+let pendingNftMint = null;
 
 // ── INIT ──
 function calcDays() { return Math.floor((Date.now() - new Date('2024-01-05')) / 86400000); }
@@ -1906,6 +1960,138 @@ async function verifyAndSign() {
     resultEl.className='verify-result fail';
     resultEl.innerHTML=`API error: ${e.message}<br>Try again later.`;
   } finally { document.getElementById('verify-btn').disabled=false; }
+}
+
+function setNftResult(type, text) {
+  const el = document.getElementById('nft-result');
+  el.style.display = 'block';
+  el.className = `verify-result ${type}`;
+  el.textContent = text;
+}
+
+async function connectNftWallet() {
+  if (!window.solana || !window.solana.isPhantom) {
+    setNftResult('fail', 'Phantom wallet not found. Install Phantom extension first.');
+    return;
+  }
+
+  try {
+    const resp = await window.solana.connect();
+    document.getElementById('nft-creator').value = resp.publicKey.toString();
+    setNftResult('success', 'Wallet connected.');
+  } catch (e) {
+    setNftResult('fail', `Wallet connection failed: ${e.message}`);
+  }
+}
+
+async function prepareNftMint() {
+  const creator = document.getElementById('nft-creator').value.trim();
+  const name = document.getElementById('nft-name').value.trim();
+  const symbol = document.getElementById('nft-symbol').value.trim();
+  const uri = document.getElementById('nft-uri').value.trim();
+  const bpsRaw = document.getElementById('nft-bps').value.trim();
+
+  if (!creator || !name || !symbol || !uri) {
+    setNftResult('fail', 'creator, name, symbol, and metadata URI are required.');
+    return;
+  }
+
+  const payload = {
+    creator,
+    name,
+    symbol,
+    uri,
+    ...(bpsRaw ? { sellerFeeBasisPoints: Number(bpsRaw) } : {}),
+  };
+
+  document.getElementById('nft-prepare-btn').disabled = true;
+  setNftResult('loading', 'Preparing NFT mint transaction...');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/nft/prepare-mint`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!data.success || !data.data?.transaction) {
+      setNftResult('fail', data.message || 'Failed to prepare mint transaction.');
+      return;
+    }
+
+    pendingNftTx = data.data.transaction;
+    pendingNftMint = data.data.mint;
+
+    document.getElementById('nft-summary').innerHTML = `
+      Mint: <code>${data.data.mint}</code><br>
+      Metadata PDA: <code>${data.data.metadataPda}</code><br>
+      Master Edition PDA: <code>${data.data.masterEditionPda}</code>
+    `;
+    setNftResult('success', 'Prepared. Now click "Sign & Mint NFT".');
+  } catch (e) {
+    setNftResult('fail', `Prepare failed: ${e.message}`);
+  } finally {
+    document.getElementById('nft-prepare-btn').disabled = false;
+  }
+}
+
+async function signAndMintNft() {
+  if (!pendingNftTx || !pendingNftMint) {
+    setNftResult('fail', 'Prepare transaction first.');
+    return;
+  }
+
+  if (!window.solana || !window.solana.isPhantom) {
+    setNftResult('fail', 'Phantom wallet not found.');
+    return;
+  }
+
+  document.getElementById('nft-mint-btn').disabled = true;
+  setNftResult('loading', 'Requesting wallet signature...');
+
+  try {
+    const raw = Uint8Array.from(atob(pendingNftTx), c => c.charCodeAt(0));
+    let tx;
+    if (window.solanaWeb3.VersionedTransaction) {
+      try {
+        tx = window.solanaWeb3.VersionedTransaction.deserialize(raw);
+      } catch (_) {
+        tx = window.solanaWeb3.Transaction.from(raw);
+      }
+    } else {
+      tx = window.solanaWeb3.Transaction.from(raw);
+    }
+
+    const signed = await window.solana.signTransaction(tx);
+    const signedBytes = signed.serialize();
+    const signedB64 = btoa(String.fromCharCode(...signedBytes));
+
+    setNftResult('loading', 'Broadcasting signed transaction...');
+    const sendRes = await fetch(`${API_BASE}/api/transaction/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tx: signedB64, skipPreflight: false, maxRetries: 5 }),
+    });
+    const sendData = await sendRes.json();
+    if (!sendData.success || !sendData.data?.signature) {
+      setNftResult('fail', sendData.message || 'Broadcast failed.');
+      return;
+    }
+
+    const creator = document.getElementById('nft-creator').value.trim();
+    await fetch(`${API_BASE}/api/nft/record-mint`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mint: pendingNftMint, creator, txSignature: sendData.data.signature }),
+    });
+
+    setNftResult('success', `NFT minted! signature: ${sendData.data.signature}`);
+  } catch (e) {
+    setNftResult('fail', `Mint failed: ${e.message}`);
+  } finally {
+    document.getElementById('nft-mint-btn').disabled = false;
+  }
 }
 </script>
 </body>
